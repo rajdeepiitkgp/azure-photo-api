@@ -15,16 +15,16 @@ public static class RestController
 
     private static async Task<IResult> UploadPhotoHandler(IFormFile? photo)
     {
-        if (photo is null) return TypedResults.BadRequest("Photo is required");
+        if (photo is null) return Results.BadRequest("Photo is required");
         await Task.Delay(10);
 
-        return TypedResults.Created($"{photo.FileName}");
+        return Results.Created();
     }
     private static async Task<IResult> GetPhotosHandler()
     {
         await Task.Delay(10);
         var results = new List<string> { "Hello" };
 
-        return TypedResults.Ok(results);
+        return Results.Ok(results);
     }
 }
