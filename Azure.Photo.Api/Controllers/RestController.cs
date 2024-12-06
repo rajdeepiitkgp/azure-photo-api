@@ -9,7 +9,7 @@ public static class RestController
 
     private static void MapPhotosApi(this RouteGroupBuilder group)
     {
-        group.MapPost("upload", UploadPhotoHandler);
+        group.MapPost("upload", UploadPhotoHandler).DisableAntiforgery();
         group.MapGet("photos", GetPhotosHandler);
     }
 
