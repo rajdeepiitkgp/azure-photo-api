@@ -18,7 +18,11 @@ public static class DependencyExtentions
         services.Configure<ComputerVisionConfig>(configuration.GetSection(ComputerVisionConfig.ComputerVision));
         services.AddSingleton<IValidateOptions<ComputerVisionConfig>, ComputerVisionConfigValidation>();
 
+        services.Configure<AzureCosmosDbConfig>(configuration.GetSection(AzureCosmosDbConfig.CosmosDb));
+        services.AddSingleton<IValidateOptions<AzureCosmosDbConfig>, AzureCosmosDbConfigValidation>();
+
         services.AddSingleton<IPhotoBlobService, PhotoBlobService>();
         services.AddSingleton<IPhotoVisionService, PhotoVisionService>();
+        services.AddSingleton<IPhotoCosmosService, PhotoCosmosService>();
     }
 }

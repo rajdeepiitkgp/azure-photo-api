@@ -15,13 +15,14 @@ public static class RestController
         group.MapGet("photos", GetPhotosHandler);
     }
 
-    private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IPhotoBlobService photoBlobService, IPhotoVisionService photoVisionService)
+    private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IPhotoBlobService photoBlobService, IPhotoVisionService photoVisionService, IPhotoCosmosService photoCosmosService)
     {
         if (photo is null || photo.Length == 0) return Results.BadRequest("Photo is required");
         try
         {
             var blobUrl = await photoBlobService.UploadPhotoToBlobContainer(photo);
             var visionResults = await photoVisionService.AnalyzeImage(blobUrl);
+            await photoCosmosService.InsertDataToCosmosDb(visionResults);
             return Results.Ok(new { Message = "Photo uploaded successfully", BlobUrl = blobUrl.ToString(), VisionResults = visionResults });
         }
         catch (Exception ex)

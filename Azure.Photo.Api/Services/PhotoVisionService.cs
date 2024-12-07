@@ -25,6 +25,7 @@ public class PhotoVisionService(IOptions<UserIdentityConfig> userIdentityConfig,
         var analizeResult = await visionClient.AnalyzeAsync(imageUri, VisualFeatures.Tags | VisualFeatures.Caption);
         var results = new PhotoImageAnalysisResult
         {
+            Url = imageUri.ToString(),
             Caption = analizeResult.Value.Caption.Text,
             Confidence = analizeResult.Value.Caption.Confidence.ToString("F4"),
             Tags = analizeResult.Value.Tags.Values.Select(t => new PhotoImageAnalysisResult.Tag { Name = t.Name, Confidence = t.Confidence.ToString("F4") })
