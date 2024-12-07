@@ -4,7 +4,7 @@ namespace Azure.Photo.Api.Models;
 
 public class PhotoImageAnalysisResult
 {
-    public string Id { get; } = Guid.NewGuid().ToString();
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Url { get; set; } = string.Empty;
     public string Caption { get; set; } = string.Empty;
     public string Confidence { get; set; } = string.Empty;
