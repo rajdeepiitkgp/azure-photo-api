@@ -1,8 +1,4 @@
-using Azure.Identity;
-using Azure.Photo.Api.Settings;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Options;
+using Azure.Photo.Api.Interfaces;
 
 namespace Azure.Photo.Api.Controllers;
 
@@ -19,38 +15,25 @@ public static class RestController
         group.MapGet("photos", GetPhotosHandler);
     }
 
-    private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IOptions<AzureStorageOption> storageOption)
+    private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IPhotoBlobService photoBlobService, IPhotoVisionService photoVisionService)
     {
         if (photo is null || photo.Length == 0) return Results.BadRequest("Photo is required");
         try
         {
-            var containerClient = GetBlobContainerClient(storageOption.Value);
-            await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
-
-            var blobName = $"{Guid.NewGuid()}-{photo.FileName}";
-            var blobClient = containerClient.GetBlobClient(blobName);
-            using var stream = photo.OpenReadStream();
-            await blobClient.UploadAsync(stream, overwrite: true);
-
-            return Results.Ok(new { Message = "Photo uploaded successfully", BlobUrl = blobClient.Uri });
+            var blobUrl = await photoBlobService.UploadPhotoToBlobContainer(photo);
+            var visionResults = await photoVisionService.AnalyzeImage(blobUrl);
+            return Results.Ok(new { Message = "Photo uploaded successfully", BlobUrl = blobUrl.ToString(), VisionResults = visionResults });
         }
         catch (Exception ex)
         {
             return Results.InternalServerError($"Error uploading photo: {ex.Message}");
         }
     }
-    private static async Task<IResult> GetPhotosHandler(IOptions<AzureStorageOption> storageOption)
+    private static async Task<IResult> GetPhotosHandler(IPhotoBlobService photoBlobService)
     {
         try
         {
-            var containerClient = GetBlobContainerClient(storageOption.Value);
-            var blobs = new List<string>();
-
-            await foreach (var blobItem in containerClient.GetBlobsAsync())
-            {
-                var blobClient = containerClient.GetBlobClient(blobItem.Name);
-                blobs.Add(blobClient.Uri.ToString());
-            }
+            var blobs = await photoBlobService.GetPhotosUrl();
             return Results.Ok(blobs);
         }
         catch (Exception ex)
@@ -59,10 +42,4 @@ public static class RestController
         }
     }
 
-    private static BlobContainerClient GetBlobContainerClient(AzureStorageOption storageOption)
-    {
-        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = storageOption.ClientId });
-        var blobServiceClient = new BlobServiceClient(new Uri($"https://{storageOption.AccountName}.blob.core.windows.net"), credential);
-        return blobServiceClient.GetBlobContainerClient(storageOption.ContainerName);
-    }
 }

@@ -10,8 +10,6 @@ public class AzureStorageOptionValidation : IValidateOptions<AzureStorageOption>
             return ValidateOptionsResult.Fail($"{nameof(option.AccountName)} cannot be null/empty");
         if (string.IsNullOrEmpty(option.ContainerName))
             return ValidateOptionsResult.Fail($"{nameof(option.ContainerName)} cannot be null/empty");
-        if (string.IsNullOrEmpty(option.ClientId))
-            return ValidateOptionsResult.Fail($"{nameof(option.ClientId)} cannot be null/empty");
 
         return ValidateOptionsResult.Success;
     }

@@ -1,6 +1,5 @@
 using Azure.Photo.Api.Controllers;
-using Azure.Photo.Api.Settings;
-using Microsoft.Extensions.Options;
+using Azure.Photo.Api.Extensions;
 using Scalar.AspNetCore;
 using Serilog;
 using LoggerExtensions = Azure.Photo.Api.Extensions.LoggerExtensions;
@@ -12,8 +11,7 @@ try
     Log.Information("Application Starting Up");
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddOpenApi();
-    builder.Services.Configure<AzureStorageOption>(builder.Configuration.GetSection("AzureStorage"));
-    builder.Services.AddSingleton<IValidateOptions<AzureStorageOption>, AzureStorageOptionValidation>();
+    builder.Services.RegisterDependencies(builder.Configuration);
     builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
     builder.Services.AddSerilog();
 
