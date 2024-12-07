@@ -61,7 +61,8 @@ public static class RestController
 
     private static BlobContainerClient GetBlobContainerClient(AzureStorageOption storageOption)
     {
-        var blobServiceClient = new BlobServiceClient(new Uri($"https://{storageOption.AccountName}.blob.core.windows.net"), new DefaultAzureCredential());
+        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = storageOption.ClientId });
+        var blobServiceClient = new BlobServiceClient(new Uri($"https://{storageOption.AccountName}.blob.core.windows.net"), credential);
         return blobServiceClient.GetBlobContainerClient(storageOption.ContainerName);
     }
 }
