@@ -24,7 +24,7 @@ public static class RestController
             var blobUrl = await photoBlobService.UploadPhotoToBlobContainer(photo);
             var visionResults = await photoVisionService.AnalyzeImage(blobUrl);
             await photoCosmosService.InsertDataToCosmosDb(visionResults);
-            return Results.Ok(new { Message = "Photo uploaded successfully", BlobUrl = blobUrl.ToString(), VisionResults = visionResults });
+            return Results.Ok(visionResults);
         }
         catch (Exception ex)
         {
