@@ -13,6 +13,7 @@ public static class RestController
     {
         group.MapPost("upload", UploadPhotoHandler).DisableAntiforgery();
         group.MapGet("photos", GetPhotosHandler);
+        group.MapGet("photos/search", SearchPhotosByTagsHandler);
     }
 
     private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IPhotoBlobService photoBlobService, IPhotoVisionService photoVisionService, IPhotoCosmosService photoCosmosService)
@@ -43,4 +44,17 @@ public static class RestController
         }
     }
 
+    private static async Task<IResult> SearchPhotosByTagsHandler(string? tags, IPhotoCosmosService photoCosmosService)
+    {
+        if (string.IsNullOrEmpty(tags)) return Results.BadRequest("tags is required");
+        try
+        {
+            var photos = await photoCosmosService.GetPhotosFromTags(tags);
+            return Results.Ok(photos);
+        }
+        catch (Exception ex)
+        {
+            return Results.InternalServerError($"Error retriving photos by Tags: {ex.Message}");
+        }
+    }
 }
