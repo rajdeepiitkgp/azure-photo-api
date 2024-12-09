@@ -3,7 +3,6 @@ using Azure.Photo.Api.Interfaces;
 using Azure.Photo.Api.Models;
 using Azure.Photo.Api.Settings;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Options;
 
 namespace Azure.Photo.Api.Services;
