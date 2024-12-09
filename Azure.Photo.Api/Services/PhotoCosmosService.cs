@@ -29,16 +29,26 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
     public async Task<IEnumerable<PhotoMetadataResponse>> GetPhotosFromTags(string searchQuery)
     {
         _logger.LogInformation("Fetching Photos for tags: {tags}", searchQuery);
+        var tagList = searchQuery.Split(',').Select(t => t.ToLower()).Distinct();
+        var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
+        var count = tagList.Count();
+        var sqlQuery = $@"
+                        SELECT * FROM c 
+                        WHERE ARRAY_LENGTH(
+                            ARRAY(
+                                SELECT VALUE t 
+                                FROM t IN c.tags 
+                                WHERE t.name IN ({tagArray})
+                            )
+                        ) = {count}";
+
         using var client = GetCosmosClient();
         var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
-        var tagList = searchQuery.Split(',');
-        var queryable = container.GetItemLinqQueryable<PhotoImageAnalysisResult>();
-        var matches = queryable.Where(photo => tagList.All(t => photo.Tags.Any(tag => tag.Name == t)));
-        using var linqFeed = matches.ToFeedIterator();
+        using var feed = container.GetItemQueryIterator<PhotoImageAnalysisResult>(queryText: sqlQuery);
         var result = new List<PhotoMetadataResponse>();
-        while (linqFeed.HasMoreResults)
+        while (feed.HasMoreResults)
         {
-            var response = await linqFeed.ReadNextAsync();
+            var response = await feed.ReadNextAsync();
             foreach (var item in response)
             {
                 result.Add(new()
