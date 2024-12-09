@@ -1,15 +1,15 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Azure.Photo.Api.Models;
 
 public class PhotoMetadataResponse
 {
-    [JsonProperty("PhotoId")]
+    [JsonPropertyName("PhotoId")]
     public string Id { get; set; } = string.Empty;
-    [JsonProperty("PhotoUrl")]
+    [JsonPropertyName("PhotoUrl")]
 
     public string Url { get; set; } = string.Empty;
-    [JsonProperty("Tags")]
+    [JsonPropertyName("Tags")]
 
     public IEnumerable<string> Tags { get; set; } = [];
 }
