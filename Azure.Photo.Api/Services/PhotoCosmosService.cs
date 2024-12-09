@@ -31,9 +31,9 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
         _logger.LogInformation("Fetching Photos for tags: {tags}", searchQuery);
         using var client = GetCosmosClient();
         var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
-        var tags = searchQuery.Split(',');
+        var tagList = searchQuery.Split(',');
         var queryable = container.GetItemLinqQueryable<PhotoImageAnalysisResult>();
-        var matches = queryable.Where(t => !tags.Except(t.Tags.Select(w => w.Name)).Any());
+        var matches = queryable.Where(photo => tagList.All(t => photo.Tags.Any(tag => tag.Name == t)));
         using var linqFeed = matches.ToFeedIterator();
         var result = new List<PhotoMetadataResponse>();
         while (linqFeed.HasMoreResults)
