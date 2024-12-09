@@ -28,7 +28,7 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
     public async Task<IEnumerable<PhotoMetadataResponse>> GetPhotosFromTags(string searchQuery)
     {
         _logger.LogInformation("Fetching Photos for tags: {tags}", searchQuery);
-        var tagList = searchQuery.Split(',').Select(t => t.ToLower()).Distinct();
+        var tagList = searchQuery.Split(',').Select(t => t.Trim().ToLower()).Distinct();
         var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
         var count = tagList.Count();
         var sqlQuery = $@"
