@@ -1,3 +1,4 @@
+using System.Web;
 using Azure.Identity;
 using Azure.Photo.Api.Interfaces;
 using Azure.Photo.Api.Settings;
@@ -29,7 +30,7 @@ public class PhotoBlobService(IOptions<AzureStorageOption> storageOption, IOptio
         using var stream = photo.OpenReadStream();
         await blobClient.UploadAsync(stream, overwrite: true);
 
-        return blobClient.Uri;
+        return new Uri(HttpUtility.UrlEncode(blobClient.Uri.ToString()));
     }
 
     public async Task<IEnumerable<string>> GetPhotosUrl()
@@ -40,7 +41,7 @@ public class PhotoBlobService(IOptions<AzureStorageOption> storageOption, IOptio
         await foreach (var blobItem in containerClient.GetBlobsAsync())
         {
             var blobClient = containerClient.GetBlobClient(blobItem.Name);
-            blobs.Add(blobClient.Uri.ToString());
+            blobs.Add(HttpUtility.UrlEncode(blobClient.Uri.ToString()));
         }
         return blobs;
     }
