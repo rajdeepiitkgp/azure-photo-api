@@ -29,7 +29,7 @@ public class PhotoBlobService(IOptions<AzureStorageOption> storageOption, IOptio
         using var stream = photo.OpenReadStream();
         await blobClient.UploadAsync(stream, overwrite: true);
 
-        return new Uri(EncodeUrl(blobClient.Uri.ToString()));
+        return blobClient.Uri;
     }
 
     public async Task<IEnumerable<string>> GetPhotosUrl()
@@ -40,18 +40,8 @@ public class PhotoBlobService(IOptions<AzureStorageOption> storageOption, IOptio
         await foreach (var blobItem in containerClient.GetBlobsAsync())
         {
             var blobClient = containerClient.GetBlobClient(blobItem.Name);
-            blobs.Add(EncodeUrl(blobClient.Uri.ToString()));
+            blobs.Add(blobClient.Uri.ToString());
         }
         return blobs;
-    }
-
-    private static string EncodeUrl(string fullUrl)
-    {
-        var uri = new Uri(fullUrl);
-        var baseUrl = fullUrl[..(fullUrl.LastIndexOf('/') + 1)];
-        var fileName = uri.Segments[^1];
-        var encodedFileName = Uri.EscapeDataString(fileName);
-        var encodedUrl = $"{baseUrl}{encodedFileName}";
-        return encodedUrl;
     }
 }
