@@ -29,7 +29,7 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
     {
         _logger.LogInformation("Fetching Photos for tags: {tags}", searchQuery);
         var tagList = searchQuery.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim().ToLower()).Distinct();
-        // var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
+        var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
         var count = tagList.Count();
         var parametarizedQuery = true;
         if (count <= 0)
@@ -42,7 +42,7 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
                             ARRAY(
                                 SELECT VALUE t 
                                 FROM t IN c.tags 
-                                WHERE t.name IN @tagList
+                                WHERE t.name IN (@tagArray)
                             )
                         ) = @count";
         if (count == 1 && (tagList.First() == "%" || tagList.First() == "*"))
@@ -54,7 +54,7 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
         var query = new QueryDefinition(sqlQuery);
         if (parametarizedQuery)
         {
-            query = query.WithParameter("@tagList", tagList).WithParameter("@count", count);
+            query = query.WithParameter("@tagArray", tagArray).WithParameter("@count", count);
         }
         using var client = GetCosmosClient();
         var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
