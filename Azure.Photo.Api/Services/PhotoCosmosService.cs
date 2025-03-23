@@ -31,7 +31,6 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
         var tagList = searchQuery.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim().ToLower()).Distinct();
         var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
         var count = tagList.Count();
-        var parametarizedQuery = true;
         if (count <= 0)
         {
             throw new ArgumentException("tags should be finite");
@@ -42,23 +41,16 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
                             ARRAY(
                                 SELECT VALUE t 
                                 FROM t IN c.tags 
-                                WHERE t.name IN (@tagArray)
+                                WHERE t.name IN ({tagArray})
                             )
-                        ) = @count";
+                        ) = {count}";
         if (count == 1 && (tagList.First() == "%" || tagList.First() == "*"))
         {
             sqlQuery = "SELECT * FROM c";
-            parametarizedQuery = false;
-        }
-
-        var query = new QueryDefinition(sqlQuery);
-        if (parametarizedQuery)
-        {
-            query = query.WithParameter("@tagArray", tagArray).WithParameter("@count", count);
         }
         using var client = GetCosmosClient();
         var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
-        using var feed = container.GetItemQueryIterator<PhotoImageAnalysisResult>(query);
+        using var feed = container.GetItemQueryIterator<PhotoImageAnalysisResult>(queryText: sqlQuery);
         var result = new List<PhotoMetadataResponse>();
         while (feed.HasMoreResults)
         {
