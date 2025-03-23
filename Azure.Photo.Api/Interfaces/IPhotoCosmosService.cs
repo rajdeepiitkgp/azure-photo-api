@@ -6,4 +6,6 @@ public interface IPhotoCosmosService
 {
     Task InsertDataToCosmosDb(PhotoImageAnalysisResult metadata);
     Task<IEnumerable<PhotoMetadataResponse>> GetPhotosFromTags(string searchQuery);
+    Task<IEnumerable<PhotoDetail>> GetPhotoList();
+    Task<PhotoMetadataResponse?> GetPhotoFromId(string id);
 }

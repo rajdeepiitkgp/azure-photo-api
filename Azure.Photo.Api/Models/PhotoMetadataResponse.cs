@@ -6,10 +6,13 @@ public class PhotoMetadataResponse
 {
     [JsonPropertyName("PhotoId")]
     public string Id { get; set; } = string.Empty;
+
     [JsonPropertyName("PhotoUrl")]
-
     public string Url { get; set; } = string.Empty;
-    [JsonPropertyName("Tags")]
 
+    [JsonPropertyName("Caption")]
+    public string Caption { get; set; } = string.Empty;
+
+    [JsonPropertyName("Tags")]
     public IEnumerable<string> Tags { get; set; } = [];
 }

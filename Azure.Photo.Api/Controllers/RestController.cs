@@ -14,6 +14,8 @@ public static class RestController
         group.MapPost("upload", UploadPhotoHandler).DisableAntiforgery();
         group.MapGet("photos", GetPhotosHandler);
         group.MapGet("photos/search", SearchPhotosByTagsHandler);
+        group.MapGet("photosV2", GetPhotosFromCosmosHandler);
+        group.MapGet("photosV2/search", GetPhotoDetail);
     }
 
     private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IPhotoBlobService photoBlobService, IPhotoVisionService photoVisionService, IPhotoCosmosService photoCosmosService)
@@ -55,6 +57,34 @@ public static class RestController
         catch (Exception ex)
         {
             return Results.InternalServerError($"Error retriving photos by Tags: {ex.Message}");
+        }
+    }
+    private static async Task<IResult> GetPhotosFromCosmosHandler(IPhotoCosmosService photoCosmosService)
+    {
+        try
+        {
+            var photos = await photoCosmosService.GetPhotoList();
+            return Results.Ok(photos);
+        }
+        catch (Exception ex)
+        {
+            return Results.InternalServerError($"Error retriving photos from database: {ex.Message}");
+        }
+    }
+
+    private static async Task<IResult> GetPhotoDetail(string? id, IPhotoCosmosService photoCosmosService)
+    {
+        if (string.IsNullOrEmpty(id)) return Results.BadRequest("id is required");
+
+        try
+        {
+            var photoDetail = await photoCosmosService.GetPhotoFromId(id);
+            if (photoDetail is null) return Results.NotFound($"Photo with id: {id} not found");
+            return Results.Ok(photoDetail);
+        }
+        catch (Exception ex)
+        {
+            return Results.InternalServerError($"Error retriving photo by id: {ex.Message}");
         }
     }
 }

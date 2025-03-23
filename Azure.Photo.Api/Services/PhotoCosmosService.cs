@@ -29,8 +29,9 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
     {
         _logger.LogInformation("Fetching Photos for tags: {tags}", searchQuery);
         var tagList = searchQuery.Split(',').Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim().ToLower()).Distinct();
-        var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
+        // var tagArray = string.Join(", ", tagList.Select(tag => $"\"{tag}\""));
         var count = tagList.Count();
+        var parametarizedQuery = true;
         if (count <= 0)
         {
             throw new ArgumentException("tags should be finite");
@@ -41,16 +42,23 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
                             ARRAY(
                                 SELECT VALUE t 
                                 FROM t IN c.tags 
-                                WHERE t.name IN ({tagArray})
+                                WHERE t.name IN @tagList
                             )
-                        ) = {count}";
+                        ) = @count";
         if (count == 1 && (tagList.First() == "%" || tagList.First() == "*"))
         {
             sqlQuery = "SELECT * FROM c";
+            parametarizedQuery = false;
+        }
+
+        var query = new QueryDefinition(sqlQuery);
+        if (parametarizedQuery)
+        {
+            query = query.WithParameter("@tagList", tagList).WithParameter("@count", count);
         }
         using var client = GetCosmosClient();
         var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
-        using var feed = container.GetItemQueryIterator<PhotoImageAnalysisResult>(queryText: sqlQuery);
+        using var feed = container.GetItemQueryIterator<PhotoImageAnalysisResult>(query);
         var result = new List<PhotoMetadataResponse>();
         while (feed.HasMoreResults)
         {
@@ -61,10 +69,60 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
                 {
                     Id = item.Id,
                     Url = item.Url,
+                    Caption = item.Caption,
                     Tags = item.Tags.Select(t => t.Name)
                 });
             }
         }
         return result;
+    }
+
+    public async Task<IEnumerable<PhotoDetail>> GetPhotoList()
+    {
+        _logger.LogInformation("Fetching All Photos");
+        var sqlQuery = "SELECT c.id,c.url FROM c ORDER BY c._ts";
+        using var client = GetCosmosClient();
+        var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
+        using var feed = container.GetItemQueryIterator<PhotoDetail>(queryText: sqlQuery);
+        var result = new List<PhotoDetail>();
+        while (feed.HasMoreResults)
+        {
+            var response = await feed.ReadNextAsync();
+            foreach (var item in response)
+            {
+                result.Add(new()
+                {
+                    Id = item.Id,
+                    Url = item.Url
+                });
+            }
+        }
+        return result;
+    }
+
+    public async Task<PhotoMetadataResponse?> GetPhotoFromId(string id)
+    {
+        _logger.LogInformation("Fetching Photo for id: {id}", id);
+        var sqlQuery = "SELECT * FROM c WHERE c.id = @id";
+        var query = new QueryDefinition(sqlQuery).WithParameter("@id", id);
+        using var client = GetCosmosClient();
+        var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
+        using var feed = container.GetItemQueryIterator<PhotoImageAnalysisResult>(query, requestOptions: new() { PartitionKey = new(id) });
+        var result = new List<PhotoMetadataResponse>();
+        while (feed.HasMoreResults)
+        {
+            var response = await feed.ReadNextAsync();
+            foreach (var item in response)
+            {
+                result.Add(new()
+                {
+                    Id = item.Id,
+                    Url = item.Url,
+                    Caption = item.Caption,
+                    Tags = item.Tags.Select(t => t.Name)
+                });
+            }
+        }
+        return result.FirstOrDefault();
     }
 }
