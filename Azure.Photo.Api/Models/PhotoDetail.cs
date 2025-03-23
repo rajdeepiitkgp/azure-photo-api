@@ -5,11 +5,11 @@ namespace Azure.Photo.Api.Models;
 
 public class PhotoDetail
 {
-    [JsonPropertyName("Id")]
+    [JsonPropertyName("PhotoId")]
     [JsonProperty("id")]
     public string Id { get; set; } = string.Empty;
 
-    [JsonPropertyName("Url")]
+    [JsonPropertyName("PhotoUrl")]
     [JsonProperty("url")]
     public string Url { get; set; } = string.Empty;
 }
