@@ -16,6 +16,7 @@ public static class RestController
         group.MapGet("photos/search", SearchPhotosByTagsHandler);
         group.MapGet("photosV2", GetPhotosFromCosmosHandler);
         group.MapGet("photosV2/search", GetPhotoDetail);
+        group.MapDelete("photos", DeletePhotosHandler);
     }
 
     private static async Task<IResult> UploadPhotoHandler(IFormFile? photo, IPhotoBlobService photoBlobService, IPhotoVisionService photoVisionService, IPhotoCosmosService photoCosmosService)
@@ -85,6 +86,30 @@ public static class RestController
         catch (Exception ex)
         {
             return Results.InternalServerError($"Error retriving photo by id: {ex.Message}");
+        }
+    }
+
+    private static async Task<IResult> DeletePhotosHandler(string? id, IPhotoBlobService photoBlobService, IPhotoCosmosService photoCosmosService)
+    {
+        if (string.IsNullOrEmpty(id)) return Results.BadRequest("id is required");
+        try
+        {
+            var photoDetail = await photoCosmosService.GetPhotoFromId(id);
+            if (photoDetail is null) return Results.NotFound($"Photo with id: {id} not found");
+
+            var photoName = photoDetail.Url.Split('/').Last();
+            if (string.IsNullOrWhiteSpace(photoName))
+            {
+                throw new ArgumentException("PhotoName is empty");
+            }
+
+            await Task.WhenAll(photoBlobService.DeletePhoto(photoName), photoCosmosService.DeletePhotoById(id));
+
+            return Results.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Results.InternalServerError($"Error deleting photo by id: {ex.Message}");
         }
     }
 }

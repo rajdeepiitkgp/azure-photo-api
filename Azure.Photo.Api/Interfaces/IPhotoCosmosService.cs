@@ -8,4 +8,5 @@ public interface IPhotoCosmosService
     Task<IEnumerable<PhotoMetadataResponse>> GetPhotosFromTags(string searchQuery);
     Task<IEnumerable<PhotoDetail>> GetPhotoList();
     Task<PhotoMetadataResponse?> GetPhotoFromId(string id);
+    Task DeletePhotoById(string id);
 }

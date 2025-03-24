@@ -117,4 +117,13 @@ public class PhotoCosmosService(IOptions<UserIdentityConfig> userIdentityConfig,
         }
         return result.FirstOrDefault();
     }
+
+    public async Task DeletePhotoById(string id)
+    {
+        _logger.LogInformation("Deleting photo metadata record for id: {id}", id);
+        using var client = GetCosmosClient();
+        var container = client.GetContainer(_azureCosmosDbConfig.DbName, _azureCosmosDbConfig.ContainerName);
+        await container.DeleteItemAsync<PhotoMetadataResponse>(id, new(id));
+
+    }
 }

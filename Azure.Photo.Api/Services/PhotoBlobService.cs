@@ -44,4 +44,11 @@ public class PhotoBlobService(IOptions<AzureStorageOption> storageOption, IOptio
         }
         return blobs;
     }
+    public async Task DeletePhoto(string blobName)
+    {
+        var containerClient = GetBlobContainerClient();
+        var blobClient = containerClient.GetBlobClient(blobName);
+        await blobClient.DeleteIfExistsAsync();
+    }
+
 }

@@ -4,4 +4,5 @@ public interface IPhotoBlobService
 {
     Task<Uri> UploadPhotoToBlobContainer(IFormFile photo);
     Task<IEnumerable<string>> GetPhotosUrl();
+    Task DeletePhoto(string blobName);
 }
